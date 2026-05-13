@@ -74,6 +74,9 @@ class Sandbox
     false
   end
 
+  sig { void }
+  def self.ensure_sandbox_installed!; end
+
   sig { returns(Integer) }
   def self.terminal_ioctl_request
     raise NotImplementedError, "Sandbox is not implemented for this OS."
@@ -99,6 +102,11 @@ class Sandbox
   def add_rule(allow:, operation:, filter: nil, modifier: nil)
     rule = SandboxRule.new(allow:, operation:, filter:, modifier:)
     @profile.add_rule(rule)
+  end
+
+  sig { params(path: T.any(String, Pathname), type: Symbol).void }
+  def allow_read(path:, type: :literal)
+    add_rule allow: true, operation: "file-read*", filter: path_filter(path, type)
   end
 
   sig { params(path: T.any(String, Pathname), type: Symbol).void }

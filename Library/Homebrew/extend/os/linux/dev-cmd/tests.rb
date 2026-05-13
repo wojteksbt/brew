@@ -20,6 +20,24 @@ module OS
         def os_files(files)
           non_macos_files(files)
         end
+
+        sig { void }
+        def check_test_environment!
+          super
+
+          require "sandbox"
+          with_env(HOMEBREW_SANDBOX_LINUX: "1") do
+            return if ::Sandbox.available?
+
+            with_env(HOMEBREW_TESTS: nil) do
+              ::Sandbox.ensure_sandbox_installed!
+            end
+
+            return if ::Sandbox.available?
+          end
+
+          raise UsageError, "Linux tests require a working rootless Bubblewrap sandbox."
+        end
       end
     end
   end

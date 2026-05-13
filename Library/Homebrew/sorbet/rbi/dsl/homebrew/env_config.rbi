@@ -287,6 +287,9 @@ module Homebrew::EnvConfig
     def pry?; end
 
     sig { returns(T::Boolean) }
+    def sandbox_linux?; end
+
+    sig { returns(T::Boolean) }
     def sbom?; end
 
     sig { returns(T::Boolean) }

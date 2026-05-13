@@ -487,6 +487,10 @@ module Homebrew
         description: "If set, use Pry for the `brew irb` command.",
         boolean:     true,
       },
+      HOMEBREW_SANDBOX_LINUX:                    {
+        description: "If set, use the `bwrap`(1) sandbox for formula installation and testing on Linux.",
+        boolean:     true,
+      },
       HOMEBREW_SBOM:                             {
         # odeprecated: edit in 5.2.0
         description: "If set, Homebrew will write SBOM files and run SBOM-related installation logic. " \

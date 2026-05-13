@@ -1102,16 +1102,19 @@ on_request: installed_on_request?, options:)
     # 1. formulae can modify ENV, so we must ensure that each
     #    installation has a pristine ENV when it starts, forking now is
     #    the easiest way to do this
+    formula_path = formula.specified_path
     args = [
       "nice",
       *HOMEBREW_RUBY_EXEC_ARGS,
       "--",
       HOMEBREW_LIBRARY_PATH/"build.rb",
-      formula.specified_path,
+      formula_path,
     ].concat(build_argv)
 
+    Sandbox.ensure_sandbox_installed!
     if Sandbox.available?
       sandbox = Sandbox.new
+      sandbox.allow_read path: formula_path if formula_path
       formula.logs.mkpath
       sandbox.record_log(formula.logs/"build.sandbox.log")
       sandbox.allow_write_path(Dir.home) if interactive?
@@ -1352,6 +1355,7 @@ on_request: installed_on_request?, options:)
 
     args << post_install_formula_path
 
+    Sandbox.ensure_sandbox_installed!
     if Sandbox.available?
       sandbox = Sandbox.new
       formula.logs.mkpath

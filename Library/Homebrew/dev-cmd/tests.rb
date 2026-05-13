@@ -66,6 +66,8 @@ module Homebrew
           # `return false`.
           require "extend/os/dev-cmd/tests"
 
+          check_test_environment!
+
           parallel = !args.no_parallel?
 
           only = args.only
@@ -210,6 +212,9 @@ module Homebrew
         bundle_args << "--tag" << "~needs_linux" << "--tag" << "~needs_systemd"
       end
 
+      sig { void }
+      def check_test_environment!; end
+
       sig { params(files: T::Array[String]).returns(T::Array[String]) }
       def os_files(files)
         # for generic tests, remove macOS or Linux specific files
@@ -256,6 +261,7 @@ module Homebrew
           HOMEBREW_GITHUB_API_TOKEN
           HOMEBREW_CACHE
           HOMEBREW_LOGS
+          HOMEBREW_SANDBOX_LINUX
           HOMEBREW_TEMP
         ]
         allowed_test_env << "HOMEBREW_USE_RUBY_FROM_PATH" if Homebrew::EnvConfig.developer?

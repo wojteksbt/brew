@@ -865,5 +865,29 @@ RSpec.describe FormulaInstaller do
         installer.build
       end.to raise_error(CannotInstallFormulaError, /source code not found/)
     end
+
+    it "exposes local formula paths to the sandbox" do
+      formula_path = mktmpdir/"homebrew-local-formula.rb"
+      FileUtils.touch formula_path
+      formula = formula("homebrew-local-formula", path: formula_path) do
+        url "foo"
+        version "1.0"
+      end
+      installer = described_class.new(formula)
+      sandbox = instance_double(Sandbox)
+
+      allow(installer).to receive(:build_argv).and_return([])
+      allow(Sandbox).to receive_messages(ensure_sandbox_installed!: nil, available?: true, new: sandbox)
+      allow(sandbox).to receive_messages(record_log: nil, allow_read: nil, allow_write_temp_and_cache: nil,
+                                         allow_write_log: nil, allow_cvs: nil, allow_fossil: nil,
+                                         allow_write_xcode: nil, allow_write_cellar: nil, run: nil)
+      allow(formula).to receive_messages(logs: mktmpdir, update_head_version: nil, prefix: mktmpdir,
+                                         network_access_allowed?: true)
+      allow(Keg).to receive(:new).and_return(instance_double(Keg, empty_installation?: false))
+
+      expect(sandbox).to receive(:allow_read).with(path: formula_path)
+
+      installer.build
+    end
   end
 end
