@@ -406,11 +406,22 @@ List all audit methods, which can be run individually if provided as arguments\.
 .TP
 \fB\-D\fP, \fB\-\-audit\-debug\fP
 Enable debugging and profiling of audit methods\.
-.SS "\fBexec\fP, \fBx\fP \fR[\fB\-\-skip\-update\fP] \fR[\fB+\fP\fIformula\fP \.\.\.] \fIcommand\fP \fR[\fIargs\fP \.\.\.]"
-Run a Homebrew executable, installing its formula if needed\.
+.SS "\fBexec\fP, \fBx\fP \fR[\fB\-\-skip\-update\fP] \fR[\fB\-\-formulae=\fP\fIformulae\fP] \fR[\fB\-\-\fP] \fIcommand\fP \fR[\fIargs\fP \.\.\.]"
+Run \fIcommand\fP in an environment populated by Homebrew formulae\.
+.P
+If \fB\-\-formulae\fP is passed, Homebrew installs those comma\-separated formulae if needed, prepends their executable directories and those of their dependencies to \fBPATH\fP and runs \fIcommand\fP\&\. This allows \fIcommand\fP to be a script path such as \fB\&\./script\.sh\fP\&\.
+.P
+If \fB\-\-formulae\fP is omitted, Homebrew finds a formula that provides \fIcommand\fP, installs it if needed and runs that executable\.
+.P
+Example: \fBbrew exec \-\-formulae=jq,yq \-\- \./script\.sh\fP
+.P
+Scripts can also use a shebang on systems with \fBenv \-S\fP: \fB#!/usr/bin/env \-S brew exec \-\-formulae=jq,yq \-\-\fP
 .TP
 \fB\-\-skip\-update\fP
 Skip updating the executables database if any version exists on disk, no matter how old\.
+.TP
+\fB\-\-formulae\fP
+Comma\-separated formulae to install and add to \fBPATH\fP before running \fIcommand\fP\&\.
 .SS "\fBfetch\fP \fR[\fIoptions\fP] \fIformula\fP|\fIcask\fP \fR[\.\.\.]"
 Download a bottle (if available) or source packages for \fIformula\fPe and binaries for \fIcask\fPs\. For files, also print SHA\-256 checksums\.
 .TP

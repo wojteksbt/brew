@@ -170,7 +170,7 @@ __brew_internal_commands() {
     'docs:Open Homebrew'\''s online documentation at https://docs.brew.sh in a browser'
     'doctor:Check your system for potential problems'
     'edit:Open a formula, cask or tap in the editor set by `$EDITOR` or `$HOMEBREW_EDITOR`, or open the Homebrew repository for editing if no argument is provided'
-    'exec:Run a Homebrew executable, installing its formula if needed'
+    'exec:Run command in an environment populated by Homebrew formulae'
     'extract:Look through repository history to find the most recent version of formula and create a copy in tap'
     'fetch:Download a bottle (if available) or source packages for formulae and binaries for casks'
     'formula:Display the path where formula is located'
@@ -1019,10 +1019,13 @@ _brew_environment() {
 _brew_exec() {
   _arguments \
     '--debug[Display any debugging information]' \
+    '--formulae[Comma-separated formulae to install and add to `PATH` before running command]' \
     '--help[Show this message]' \
     '--quiet[Make some output more quiet]' \
     '--skip-update[Skip updating the executables database if any version exists on disk, no matter how old]' \
-    '--verbose[Make some output more verbose]'
+    '--verbose[Make some output more verbose]' \
+    - command \
+    '*:command:__brew_commands'
 }
 
 # brew extract
@@ -2613,10 +2616,13 @@ _brew_which_update() {
 _brew_x() {
   _arguments \
     '--debug[Display any debugging information]' \
+    '--formulae[Comma-separated formulae to install and add to `PATH` before running command]' \
     '--help[Show this message]' \
     '--quiet[Make some output more quiet]' \
     '--skip-update[Skip updating the executables database if any version exists on disk, no matter how old]' \
-    '--verbose[Make some output more verbose]'
+    '--verbose[Make some output more verbose]' \
+    - command \
+    '*:command:__brew_commands'
 }
 
 # The main completion function

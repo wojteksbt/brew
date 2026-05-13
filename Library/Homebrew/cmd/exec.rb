@@ -11,15 +11,31 @@ module Homebrew
 
       cmd_args do
         usage_banner <<~EOS
-          `exec`, `x` [`--skip-update`] [`+`<formula> ...] <command> [<args> ...]
+          `exec`, `x` [`--skip-update`] [`--formulae=`<formulae>] [`--`] <command> [<args> ...]
 
-          Run a Homebrew executable, installing its formula if needed.
+          Run <command> in an environment populated by Homebrew formulae.
+
+          If `--formulae` is passed, Homebrew installs those comma-separated
+          formulae if needed, prepends their executable directories and those of
+          their dependencies to `PATH` and runs <command>. This allows <command>
+          to be a script path such as `./script.sh`.
+
+          If `--formulae` is omitted, Homebrew finds a formula that provides
+          <command>, installs it if needed and runs that executable.
+
+          Example: `brew exec --formulae=jq,yq -- ./script.sh`
+
+          Scripts can also use a shebang on systems with `env -S`:
+          `#!/usr/bin/env -S brew exec --formulae=jq,yq --`
         EOS
 
         switch "--skip-update",
                description: "Skip updating the executables database if any version exists on disk, no matter how old."
+        comma_array "--formulae",
+                    description: "Comma-separated formulae to install and add to `PATH` before running " \
+                                 "<command>."
 
-        named_args min: 1
+        named_args :command, min: 1
       end
     end
   end

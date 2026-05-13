@@ -650,14 +650,32 @@ working fine: please don't worry or file an issue; just ignore this.
 
 : Enable debugging and profiling of audit methods.
 
-### `exec`, `x` \[`--skip-update`\] \[`+`*`formula`* ...\] *`command`* \[*`args`* ...\]
+### `exec`, `x` \[`--skip-update`\] \[`--formulae=`*`formulae`*\] \[`--`\] *`command`* \[*`args`* ...\]
 
-Run a Homebrew executable, installing its formula if needed.
+Run *`command`* in an environment populated by Homebrew formulae.
+
+If `--formulae` is passed, Homebrew installs those comma-separated formulae if
+needed, prepends their executable directories and those of their dependencies to
+`PATH` and runs *`command`*. This allows *`command`* to be a script path such as
+`./script.sh`.
+
+If `--formulae` is omitted, Homebrew finds a formula that provides *`command`*,
+installs it if needed and runs that executable.
+
+Example: `brew exec --formulae=jq,yq -- ./script.sh`
+
+Scripts can also use a shebang on systems with `env -S`: `#!/usr/bin/env -S brew
+exec --formulae=jq,yq --`
 
 `--skip-update`
 
 : Skip updating the executables database if any version exists on disk, no
   matter how old.
+
+`--formulae`
+
+: Comma-separated formulae to install and add to `PATH` before running
+  *`command`*.
 
 ### `fetch` \[*`options`*\] *`formula`*\|*`cask`* \[...\]
 

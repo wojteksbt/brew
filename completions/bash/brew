@@ -1144,6 +1144,7 @@ _brew_exec() {
     -*)
       __brewcomp "
       --debug
+      --formulae
       --help
       --quiet
       --skip-update
@@ -1153,6 +1154,7 @@ _brew_exec() {
       ;;
     *) ;;
   esac
+  __brew_complete_commands
 }
 
 _brew_extract() {
@@ -3329,6 +3331,7 @@ _brew_x() {
     -*)
       __brewcomp "
       --debug
+      --formulae
       --help
       --quiet
       --skip-update
@@ -3338,6 +3341,7 @@ _brew_x() {
       ;;
     *) ;;
   esac
+  __brew_complete_commands
 }
 
 _brew() {

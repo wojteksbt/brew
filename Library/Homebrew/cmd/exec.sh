@@ -77,14 +77,27 @@ exec-add-formula-paths() {
 }
 
 homebrew-exec() {
-  local formula
   local formulae=()
+  local formulae_arg=""
+  local formulae_seen=0
 
   while [[ "$#" -gt 0 ]]
   do
     case "$1" in
       --skip-update)
         HOMEBREW_SKIP_UPDATE=1
+        shift
+        ;;
+      --formulae=*)
+        formulae_arg="${1#--formulae=}"
+        formulae_seen=1
+        shift
+        ;;
+      --formulae)
+        shift
+        [[ "$#" -gt 0 ]] || odie "\`--formulae\` requires a comma-separated formula list."
+        formulae_arg="$1"
+        formulae_seen=1
         shift
         ;;
       --help | -h)
@@ -100,17 +113,22 @@ homebrew-exec() {
         "${HOMEBREW_BREW_FILE}" help exec
         return 1
         ;;
-      +*)
-        formula="${1#+}"
-        [[ -n "${formula}" ]] || odie "Formula override '+' is missing a formula name."
-        formulae+=("${formula}")
-        shift
-        ;;
       *)
         break
         ;;
     esac
   done
+
+  if [[ "${formulae_seen}" -eq 1 ]]
+  then
+    [[ -n "${formulae_arg}" ]] || odie "\`--formulae\` requires a comma-separated formula list."
+    IFS=',' read -r -a formulae <<<"${formulae_arg}"
+    local formula
+    for formula in "${formulae[@]}"
+    do
+      [[ -n "${formula}" ]] || odie "\`--formulae\` entries must not be empty."
+    done
+  fi
 
   local executable="${1:-}"
   if [[ -z "${executable}" ]]
@@ -120,14 +138,16 @@ homebrew-exec() {
   fi
   shift
 
-  [[ "${executable}" != */* ]] || odie "Executable name must not contain path separators."
-
+  local provider_lookup=0
   if [[ "${#formulae[@]}" -eq 0 ]]
   then
+    [[ "${executable}" != */* ]] || odie "Executable name must not contain path separators without \`--formulae\`."
+
+    provider_lookup=1
     download_and_cache_executables_file >&2
 
     local -a matching_formulae=()
-    local cmds_text line selected_formula
+    local cmds_text line selected_formula formula
     selected_formula=""
     # Some executables are provided by multiple formulae. Prefer an already
     # installed provider to avoid unnecessary installs; otherwise use the first
@@ -167,41 +187,39 @@ homebrew-exec() {
     fi
   fi
 
+  local formula
   for formula in "${formulae[@]}"
   do
     if ! exec-formula-installed "${formula}"
     then
-      ohai "Installing \`${formula}\` because it provides \`${executable}\`." >&2
+      if [[ "${provider_lookup}" -eq 1 ]]
+      then
+        ohai "Installing \`${formula}\` because it provides \`${executable}\`." >&2
+      else
+        ohai "Installing \`${formula}\`." >&2
+      fi
       "${HOMEBREW_BREW_FILE}" install --formula "${formula}" >&2 || return
     fi
   done
 
-  local candidate executable_path formula_name keg
-  executable_path=""
-  for formula in "${formulae[@]}"
-  do
-    formula_name="$(exec-formula-name "${formula}")"
-    local -a executable_candidate_paths=(
-      "${HOMEBREW_PREFIX}/opt/${formula_name}/bin/${executable}"
-      "${HOMEBREW_PREFIX}/opt/${formula_name}/sbin/${executable}"
-    )
-
-    # Do not use `HOMEBREW_PREFIX`/bin or sbin here. A different provider may
-    # be linked there with the same executable name.
-    # `break 2` leaves both this candidate loop and the surrounding formula
-    # loop as soon as a path has been narrowed down.
-    for candidate in "${executable_candidate_paths[@]}"
+  local executable_path="${executable}"
+  if [[ "${provider_lookup}" -eq 1 ]]
+  then
+    local candidate formula_name keg
+    executable_path=""
+    for formula in "${formulae[@]}"
     do
-      if [[ -f "${candidate}" && -x "${candidate}" ]]
-      then
-        executable_path="${candidate}"
-        break 2
-      fi
-    done
+      formula_name="$(exec-formula-name "${formula}")"
+      local -a executable_candidate_paths=(
+        "${HOMEBREW_PREFIX}/opt/${formula_name}/bin/${executable}"
+        "${HOMEBREW_PREFIX}/opt/${formula_name}/sbin/${executable}"
+      )
 
-    if keg="$(exec-latest-keg "${formula}")"
-    then
-      for candidate in "${keg}/bin/${executable}" "${keg}/sbin/${executable}"
+      # Do not use `HOMEBREW_PREFIX`/bin or sbin here. A different provider may
+      # be linked there with the same executable name.
+      # `break 2` leaves both this candidate loop and the surrounding formula
+      # loop as soon as a path has been narrowed down.
+      for candidate in "${executable_candidate_paths[@]}"
       do
         if [[ -f "${candidate}" && -x "${candidate}" ]]
         then
@@ -209,10 +227,22 @@ homebrew-exec() {
           break 2
         fi
       done
-    fi
-  done
 
-  [[ -n "${executable_path}" ]] || odie "\`${executable}\` was not found in formulae: ${formulae[*]}."
+      if keg="$(exec-latest-keg "${formula}")"
+      then
+        for candidate in "${keg}/bin/${executable}" "${keg}/sbin/${executable}"
+        do
+          if [[ -f "${candidate}" && -x "${candidate}" ]]
+          then
+            executable_path="${candidate}"
+            break 2
+          fi
+        done
+      fi
+    done
+
+    [[ -n "${executable_path}" ]] || odie "\`${executable}\` was not found in formulae: ${formulae[*]}."
+  fi
 
   local -a exec_path_entries=()
   local dependency exec_path path_index
